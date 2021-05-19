@@ -53,11 +53,22 @@ UART_HandleTypeDef huart2;
 uint8_t ADCUpdateFlag = 0;
 //Store ADC Value
 uint16_t ADCFeedBack = 0;
+uint16_t ADCUpdate = 0;
 
 uint16_t PWMOut = 3000;
 
 uint64_t _micro = 0;
 uint64_t TimeOutputLoop = 0;
+
+float Volt = 1;
+float KP = 2;
+float KI = 4;
+float KD = 1;
+float error = 0;
+float integral_error = 0;
+float last_error = 0;
+float newVolt = 0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -136,7 +147,17 @@ int main(void)
 			TimeOutputLoop = micros();
 			// #001
 
+			ADCUpdate = (Volt * 4096)/3.3;
+			error = ADCUpdate - ADCFeedBack;
+			integral_error += error;
+			PWMOut = (KP*error) + (KI*integral_error) + (KD*(error-last_error));
+//			PWMOut = (KP*error) + (KI*integral_error);
+			last_error = error;
+
 			__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, PWMOut);
+
+			newVolt = (ADCFeedBack * 3.3)/4096;
+
 
 		}
 
